@@ -25,6 +25,6 @@ def test_read_frame_simple_string_extra_data():
     (b"+OK\r\n", (SimpleString("OK"), 5)),
     (b"+OK\r\n+Next", (SimpleString("OK"), 5)),
 ])
-def test_read_frame_simple_string(buffer, expected):
+def test_read_frame_simple_string(buffer: bytes, expected: tuple[SimpleString | None, int]):
     actual = extract_frame_from_buffer(buffer)
     assert actual == expected
