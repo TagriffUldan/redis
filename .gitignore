@@ -6,7 +6,7 @@ __pycache__/
 dump.rdp
 
 appendonlydir/
-
+appendonlydir
 # C extensions
 *.so
 
