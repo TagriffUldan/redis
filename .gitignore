@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+dump.rdp
+
+appendonlydir/
+
 # C extensions
 *.so
 
