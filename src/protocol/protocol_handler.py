@@ -1,22 +1,35 @@
 from dataclasses import dataclass
-from enum import Enum
-
+from typing import Protocol, Any
 
 MSG_SEPARATOR = b"\r\n"
 
-class FIRST_BYTE(Enum):
-    PLUS = '+'
 
-VALID_FIRST_BYTES = {
-    '+': ''
+def parse_simple_string():
+    ..
+
+
+VALID_FIRST_BYTES: dict[str, Any] = {
+    '+': '',
+    '-': ''
 }
+
+@dataclass
+class RespDataType(Protocol):
+    data: Any
 
 @dataclass
 class SimpleString:
     data: str
 
+@dataclass 
+class SimpleError:
+    data: str
 
-def extract_frame_from_buffer(buffer: bytes) -> tuple[SimpleString | None, int]:
+@dataclass
+class Nulls:
+    data: None
+
+def extract_frame_from_buffer(buffer: bytes) -> tuple[RespDataType, int]:
     first_byte = chr(buffer[0])
 
     if first_byte in VALID_FIRST_BYTES.keys():
@@ -24,6 +37,6 @@ def extract_frame_from_buffer(buffer: bytes) -> tuple[SimpleString | None, int]:
         if separator != -1:
             return SimpleString(buffer[1:separator].decode()), separator + 2
 
-    return None, 0
+    return Nulls(None), 0
 
 print(extract_frame_from_buffer(b"+OK\r\n+Next"))

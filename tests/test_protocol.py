@@ -1,4 +1,4 @@
-from src.protocol.protocol_handler import SimpleString
+from src.protocol.protocol_handler import RespDataType, SimpleString, SimpleError
 from src.protocol.protocol_handler import extract_frame_from_buffer
 import pytest
 
@@ -24,7 +24,9 @@ def test_read_frame_simple_string_extra_data():
     (b"+Par", (None, 0)),
     (b"+OK\r\n", (SimpleString("OK"), 5)),
     (b"+OK\r\n+Next", (SimpleString("OK"), 5)),
+    (b"-Error message\r\n", (SimpleError("Error message"), 16)),
+    (b"$-1\r\n", (None, 0))
 ])
-def test_read_frame_simple_string(buffer: bytes, expected: tuple[SimpleString | None, int]):
+def test_read_frame_simple_string(buffer: bytes, expected: tuple[RespDataType | None, int]):
     actual = extract_frame_from_buffer(buffer)
     assert actual == expected
