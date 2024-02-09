@@ -18,5 +18,13 @@ class Integer:
     data: int
 
 @dataclass
+class BulkString:
+    data: str
+
+@dataclass
+class Array:
+    data: list[Any]
+
+@dataclass
 class Nulls:
     data: None
