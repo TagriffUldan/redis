@@ -1,4 +1,4 @@
-from data_types import (RespDataType, SimpleError, Integer, BulkString, SimpleString, Array)
+from .data_types import (RespDataType, SimpleError, Integer, BulkString, SimpleString, Array)
 from typing import Callable, Optional, Tuple
 
 _MSG_SEPARATOR = b"\r\n"
@@ -82,7 +82,8 @@ def extract_frame_from_buffer(buffer: bytes) -> Tuple[RespDataType | None, int]:
 
 
 def main():
-    print(parse_array(b"*2\r\n$5\r\nhello\r\n$5\r\nworld\r\n+OK", 2))
+    print(parse_array(b"*2\r\n*3\r\n:1\r\n:2\r\n:3\r\n*2\r\n+Hello\r\n-World\r\n", 2))
+
 
 
 if __name__ == '__main__':

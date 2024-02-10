@@ -8,7 +8,8 @@ import pytest
     (b"+OK\r\n", (SimpleString("OK"), 5)),
     (b"+OK\r\n+Next", (SimpleString("OK"), 5)),
     (b"-Error message\r\n", (SimpleError("Error message"), 16)),
-    (b"$-1\r\n", (None, 0))
+    (b"$-1\r\n", (None, 0)),
+    (b"*0", (None, 0)),
 ])
 def test_read_frame_simple_string(buffer: bytes, expected: tuple[RespDataType | None, int]):
     actual_data_type, actual_length = extract_frame_from_buffer(buffer)
@@ -19,6 +20,7 @@ def test_read_frame_simple_string(buffer: bytes, expected: tuple[RespDataType | 
 
 @pytest.mark.parametrize("buffer, separator_index, expected", [
     (b"+OK\r\n", 3, (SimpleString("OK"), 5)),
+    (b"+appleshit\r\n", 10, (SimpleString("appleshit"), 12)),
 ])
 def test_parse_simple_string(buffer: bytes, separator_index: int, expected: tuple[RespDataType | None, int]):
     actual_data_type, actual_length = parse_simple_string(buffer, separator_index)
@@ -66,7 +68,8 @@ def test_parse_bulk_string(buffer: bytes, separator_index: int, expected: tuple[
 @pytest.mark.parametrize("buffer, separator_index, expected", [
     (b"*2\r\n$5\r\nhello\r\n$5\r\nworld\r\n", 2, (Array([BulkString("hello"), BulkString("world")]), 26)),
     (b"*0\r\n", 2, (Array([]), 4)),
-    (b"*0", -1, (None, 0))
+    (b"*3\r\n:1\r\n:2\r\n:3\r\n", 2, (Array([Integer(1), Integer(2), Integer(3)]), 16)),
+    (b"*2\r\n*3\r\n:1\r\n:2\r\n:3\r\n*2\r\n+Hello\r\n-World\r\n", 2, (Array(data=[Array(data=[Integer(data=1), Integer(data=2), Integer(data=3)]), Array(data=[SimpleString(data='Hello'), SimpleError(data='World')])]), 40))
 ])
 def test_parse_array(buffer: bytes, separator_index: int, expected: tuple[RespDataType | None, int]):
     actual_data_type, actual_length = parse_array(buffer, separator_index)
