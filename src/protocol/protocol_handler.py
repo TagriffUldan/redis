@@ -1,46 +1,65 @@
-from .data_types import (RespDataType, SimpleError, Integer, BulkString, SimpleString, Array)
-from typing import Callable, Optional
+from data_types import (RespDataType, SimpleError, Integer, BulkString, SimpleString, Array)
+from typing import Callable, Optional, Tuple
 
-MSG_SEPARATOR = b"\r\n"
-ParseFn = Callable[[bytes, int], Optional[RespDataType]]
+_MSG_SEPARATOR = b"\r\n"
+_MSG_SEPARATOR_SIZE = len(_MSG_SEPARATOR)
 
-
-def parse_simple_string(buffer: bytes, separator_index: int) -> SimpleString:
-    return SimpleString(buffer[1:separator_index].decode())
+ParseFn = Callable[[bytes, int], Tuple[Optional[RespDataType], int]]
 
 
-def parse_simple_errors(buffer: bytes, separator_index: int) -> SimpleError:
-    return SimpleError(buffer[1:separator_index].decode())
+def parse_simple_string(buffer: bytes, separator_index: int) -> Tuple[SimpleString, int]:
+    return SimpleString(buffer[1:separator_index].decode()), separator_index + _MSG_SEPARATOR_SIZE
 
 
-def parse_integers(buffer: bytes, separator_index: int) -> Integer:
-    factor = chr(buffer[1])
-    if factor == '+' or factor == '-':
-        multiplier = -1 if factor == '-' else 1
-        integer = int(buffer[2:separator_index].decode())
-        return Integer(multiplier * integer)
-    else:
-        integer = int(buffer[1:separator_index].decode())
-        return Integer(integer)
+def parse_simple_errors(buffer: bytes, separator_index: int) -> Tuple[SimpleError, int]:
+    return SimpleError(buffer[1:separator_index].decode()), separator_index + _MSG_SEPARATOR_SIZE
 
 
-def parse_bulk_string(buffer: bytes, separator_index: int) -> Optional[BulkString]:
-    if buffer[1:3].decode() == '-1':
-        return None
+def parse_integers(buffer: bytes, separator_index: int) -> Tuple[Integer, int]:
+    return Integer(int(buffer[1:separator_index].decode())), separator_index + _MSG_SEPARATOR_SIZE
+
+
+def parse_bulk_string(buffer: bytes, separator_index: int) -> Tuple[Optional[BulkString], int]:
+    length = int(buffer[1:separator_index].decode())
+
+    # ensure the buffer is as long as length indicates
+    if len(buffer) < separator_index + _MSG_SEPARATOR_SIZE + length + _MSG_SEPARATOR_SIZE:
+        return None, 0
     
-    if buffer[2+separator_index:].find(MSG_SEPARATOR) == -1:
-        return None
+    # ensure there is a correct terminating separator
+    if buffer[separator_index+_MSG_SEPARATOR_SIZE:].find(_MSG_SEPARATOR) == -1:
+        return None, 0
 
-    length = int(chr(buffer[1]))
-    content = buffer[2+separator_index:2+separator_index+length].decode()
-    return BulkString(content)
+    if length == -1:
+        return BulkString(None), length + _MSG_SEPARATOR_SIZE
+    
+    content = buffer[separator_index+_MSG_SEPARATOR_SIZE:separator_index+length+_MSG_SEPARATOR_SIZE].decode()
+
+    return BulkString(content), separator_index + _MSG_SEPARATOR_SIZE + length + _MSG_SEPARATOR_SIZE
 
 
-def parse_array(buffer: bytes, separator_index: int) -> Optional[Array]:
-    if chr(buffer[1]) == '0':
-        return Array([])
+def parse_array(buffer: bytes, separator_index: int) -> Tuple[Optional[Array], int]:
+    payload = buffer[1:separator_index].decode()
+    length = int(payload)
 
-    return None
+    if length == 0:
+        return Array([]), separator_index + _MSG_SEPARATOR_SIZE
+    
+    if length == -1:
+        return Array(None), separator_index + _MSG_SEPARATOR_SIZE
+    
+    arr: list[Optional[RespDataType]] = []
+
+    for _ in range(length):
+        next_item, length = extract_frame_from_buffer(buffer[separator_index + _MSG_SEPARATOR_SIZE:])
+
+        if next_item and length:
+            arr.append(next_item)
+            separator_index += length   
+        else:
+            return None, 0
+
+    return Array(arr), separator_index + _MSG_SEPARATOR_SIZE
     
 
 VALID_FIRST_BYTES: dict[str, ParseFn] = {
@@ -52,20 +71,18 @@ VALID_FIRST_BYTES: dict[str, ParseFn] = {
 }
 
 
-def extract_frame_from_buffer(buffer: bytes) -> RespDataType | None:
+def extract_frame_from_buffer(buffer: bytes) -> Tuple[RespDataType | None, int]:
+    separator_index = buffer.find(_MSG_SEPARATOR)
     first_byte = chr(buffer[0])
 
-    if first_byte in VALID_FIRST_BYTES.keys():
-        separator_index = buffer.find(MSG_SEPARATOR)
+    if first_byte in VALID_FIRST_BYTES.keys() and separator_index != -1:
+        return VALID_FIRST_BYTES[first_byte](buffer, separator_index)
 
-        if separator_index != -1:
-            return VALID_FIRST_BYTES[first_byte](buffer, separator_index)
-
-    return None
+    return None, 0
 
 
 def main():
-    print(extract_frame_from_buffer(b"$5\r\nhello\r\n"))
+    print(parse_array(b"*2\r\n$5\r\nhello\r\n$5\r\nworld\r\n+OK", 2))
 
 
 if __name__ == '__main__':

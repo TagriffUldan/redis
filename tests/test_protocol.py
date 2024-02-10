@@ -4,58 +4,72 @@ from src.protocol.protocol_handler import parse_simple_string, parse_simple_erro
 import pytest
 
 @pytest.mark.parametrize("buffer, expected", [
-    (b"+Par", None),
-    (b"+OK\r\n", SimpleString("OK")),
-    (b"+OK\r\n+Next", SimpleString("OK")),
-    (b"-Error message\r\n", SimpleError("Error message")),
-    (b"$-1\r\n", None)
+    (b"+Par", (None, 0)),
+    (b"+OK\r\n", (SimpleString("OK"), 5)),
+    (b"+OK\r\n+Next", (SimpleString("OK"), 5)),
+    (b"-Error message\r\n", (SimpleError("Error message"), 16)),
+    (b"$-1\r\n", (None, 0))
 ])
 def test_read_frame_simple_string(buffer: bytes, expected: tuple[RespDataType | None, int]):
-    actual = extract_frame_from_buffer(buffer)
-    assert actual == expected
-
-
-@pytest.mark.parametrize("buffer, separator_index, expected_data_type", [
-    (b"+OK\r\n", 3, SimpleString("OK")),
-])
-def test_parse_simple_string(buffer: bytes, separator_index: int, expected_data_type: RespDataType):
-    actual_data_type = parse_simple_string(buffer, separator_index)
+    actual_data_type, actual_length = extract_frame_from_buffer(buffer)
+    expected_data_type, expected_length = expected
     assert actual_data_type == expected_data_type
+    assert actual_length == expected_length
 
 
-@pytest.mark.parametrize("buffer, separator_index, expected_data_type", [
-    (b"-Error message\r\n", 14, SimpleError("Error message")),
+@pytest.mark.parametrize("buffer, separator_index, expected", [
+    (b"+OK\r\n", 3, (SimpleString("OK"), 5)),
 ])
-def test_parse_simple_errors(buffer: bytes, separator_index: int, expected_data_type: RespDataType):
-    actual_data_type = parse_simple_errors(buffer, separator_index)
+def test_parse_simple_string(buffer: bytes, separator_index: int, expected: tuple[RespDataType | None, int]):
+    actual_data_type, actual_length = parse_simple_string(buffer, separator_index)
+    expected_data_type, expected_length = expected
     assert actual_data_type == expected_data_type
+    assert actual_length == expected_length
 
-@pytest.mark.parametrize("buffer, separator_index, expected_data_type", [
-    (b":5\r\n", 2, Integer(5)),
-    (b":-500\r\n", 5, Integer(-500)),
-    (b":+10\r\n", 4, Integer(10)),
-    (b":+100000\r\n", 8, Integer(100000)),
+
+@pytest.mark.parametrize("buffer, separator_index, expected", [
+    (b"-Error message\r\n", 14, (SimpleError("Error message"), 16)),
 ])
-def test_parse_integers(buffer: bytes, separator_index: int, expected_data_type: RespDataType):
-    actual_data_type = parse_integers(buffer, separator_index)
+def test_parse_simple_errors(buffer: bytes, separator_index: int, expected: tuple[RespDataType | None, int]):
+    actual_data_type, actual_length = parse_simple_errors(buffer, separator_index)
+    expected_data_type, expected_length = expected
     assert actual_data_type == expected_data_type
+    assert actual_length == expected_length
 
-
-@pytest.mark.parametrize("buffer, separator_index, expected_data_type", [
-    (b"$5\r\nhello\r\n", 2, BulkString("hello")),
-    (b"$-1\r\n", 3, None),
-    (b"$9\r\nintercept\r\n", 2, BulkString("intercept")),
-    (b"$9\r\nintercept\n\r", 2, None),
+@pytest.mark.parametrize("buffer, separator_index, expected", [
+    (b":5\r\n", 2, (Integer(5), 4)),
+    (b":-500\r\n", 5, (Integer(-500), 7)),
+    (b":+10\r\n", 4, (Integer(10), 6)),
+    (b":+100000\r\n", 8, (Integer(100000), 10)),
 ])
-def test_parse_bulk_string(buffer: bytes, separator_index: int, expected_data_type: RespDataType):
-    actual_data_type = parse_bulk_string(buffer, separator_index)
+def test_parse_integers(buffer: bytes, separator_index: int, expected: tuple[RespDataType | None, int]):
+    actual_data_type, actual_length = parse_integers(buffer, separator_index)
+    expected_data_type, expected_length = expected
     assert actual_data_type == expected_data_type
+    assert actual_length == expected_length
 
 
-@pytest.mark.parametrize("buffer, separator_index, expected_data_type", [
-    (b"*2\r\n$5\r\nhello\r\n$5\r\nworld\r\n", 2, Array(["hello", "world"])),
-    (b"*0\r\n", 2, Array([])),
+@pytest.mark.parametrize("buffer, separator_index, expected", [
+    (b"$5\r\nhello\r\n", 2, (BulkString("hello"), 11)),
+    (b"$-1\r\n", 3, (None, 0)),
+    (b"$9\r\nintercept\r\n", 2, (BulkString("intercept"), 15)),
+    (b"$9\r\nintercept\n\r", 2, (None, 0)),
+    (b"$11\r\nintercepted\r\n", 3, (BulkString("intercepted"), 18))
 ])
-def test_parse_array(buffer: bytes, separator_index: int, expected_data_type: RespDataType):
-    actual_data_type = parse_array(buffer, separator_index)
+def test_parse_bulk_string(buffer: bytes, separator_index: int, expected: tuple[RespDataType | None, int]):
+    actual_data_type, actual_length = parse_bulk_string(buffer, separator_index)
+    expected_data_type, expected_length = expected
     assert actual_data_type == expected_data_type
+    assert actual_length == expected_length
+
+
+@pytest.mark.parametrize("buffer, separator_index, expected", [
+    (b"*2\r\n$5\r\nhello\r\n$5\r\nworld\r\n", 2, (Array([BulkString("hello"), BulkString("world")]), 26)),
+    (b"*0\r\n", 2, (Array([]), 4)),
+    (b"*0", -1, (None, 0))
+])
+def test_parse_array(buffer: bytes, separator_index: int, expected: tuple[RespDataType | None, int]):
+    actual_data_type, actual_length = parse_array(buffer, separator_index)
+    expected_data_type, expected_length = expected
+    assert actual_data_type == expected_data_type
+    assert actual_length == expected_length

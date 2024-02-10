@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Any, Protocol, Optional
 
 @dataclass
 class RespDataType(Protocol):
@@ -19,11 +19,21 @@ class Integer:
 
 @dataclass
 class BulkString:
-    data: str
+    data: Optional[str]
 
 @dataclass
 class Array:
-    data: list[Any]
+    data: Optional[list[Optional[RespDataType]]]
+
+    def __getitem__(self, i: int) -> Optional[RespDataType]:
+        if self.data:
+            return self.data[i]
+        
+    def __len__(self) -> Optional[int]:
+        if self.data:
+            return len(self.data)
+    
+
 
 @dataclass
 class Nulls:
