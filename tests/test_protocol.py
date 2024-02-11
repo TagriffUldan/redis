@@ -69,7 +69,9 @@ def test_parse_bulk_string(buffer: bytes, separator_index: int, expected: tuple[
     (b"*2\r\n$5\r\nhello\r\n$5\r\nworld\r\n", 2, (Array([BulkString("hello"), BulkString("world")]), 26)),
     (b"*0\r\n", 2, (Array([]), 4)),
     (b"*3\r\n:1\r\n:2\r\n:3\r\n", 2, (Array([Integer(1), Integer(2), Integer(3)]), 16)),
-    (b"*2\r\n*3\r\n:1\r\n:2\r\n:3\r\n*2\r\n+Hello\r\n-World\r\n", 2, (Array(data=[Array(data=[Integer(data=1), Integer(data=2), Integer(data=3)]), Array(data=[SimpleString(data='Hello'), SimpleError(data='World')])]), 40))
+    (b"*2\r\n*3\r\n:1\r\n:2\r\n:3\r\n*2\r\n+Hello\r\n-World\r\n", 2, 
+     (Array(data=[Array(data=[Integer(data=1), Integer(data=2), Integer(data=3)]), 
+                  Array(data=[SimpleString(data='Hello'), SimpleError(data='World')])]), 40))
 ])
 def test_parse_array(buffer: bytes, separator_index: int, expected: tuple[RespDataType | None, int]):
     actual_data_type, actual_length = parse_array(buffer, separator_index)

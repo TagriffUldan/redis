@@ -31,7 +31,7 @@ def parse_bulk_string(buffer: bytes, separator_index: int) -> Tuple[Optional[Bul
         return None, 0
 
     if length == -1:
-        return BulkString(None), length + _MSG_SEPARATOR_SIZE
+        return BulkString(''), length + _MSG_SEPARATOR_SIZE
     
     content = buffer[separator_index+_MSG_SEPARATOR_SIZE:separator_index+length+_MSG_SEPARATOR_SIZE].decode()
 
@@ -46,9 +46,9 @@ def parse_array(buffer: bytes, separator_index: int) -> Tuple[Optional[Array], i
         return Array([]), separator_index + _MSG_SEPARATOR_SIZE
     
     if length == -1:
-        return Array(None), separator_index + _MSG_SEPARATOR_SIZE
+        return Array([]), separator_index + _MSG_SEPARATOR_SIZE
     
-    arr: list[Optional[RespDataType]] = []
+    arr: list[RespDataType] = []
 
     for _ in range(length):
         next_item, length = extract_frame_from_buffer(buffer[separator_index + _MSG_SEPARATOR_SIZE:])
