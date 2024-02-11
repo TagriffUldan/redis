@@ -79,12 +79,3 @@ def extract_frame_from_buffer(buffer: bytes) -> Tuple[RespDataType | None, int]:
         return VALID_FIRST_BYTES[first_byte](buffer, separator_index)
 
     return None, 0
-
-
-def main():
-    print(parse_array(b"*2\r\n*3\r\n:1\r\n:2\r\n:3\r\n*2\r\n+Hello\r\n-World\r\n", 2))
-
-
-
-if __name__ == '__main__':
-    main()

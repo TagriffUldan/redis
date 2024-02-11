@@ -5,28 +5,28 @@ from typing import Any, Protocol, Optional
 class RespDataType(Protocol):
     data: Any
 
-    def encode(self) -> bytes:
+    def encode_message(self) -> bytes:
         ...
 
 @dataclass
 class SimpleString:
     data: str
 
-    def encode(self) -> bytes:
+    def encode_message(self) -> bytes:
         return f"+{self.data}\r\n".encode()
     
 @dataclass 
 class SimpleError:
     data: str
 
-    def encode(self) -> bytes:
+    def encode_message(self) -> bytes:
         return f"-{self.data}\r\n".encode()
 
 @dataclass
 class Integer:
     data: int
 
-    def encode(self) -> bytes:
+    def encode_message(self) -> bytes:
         return f":{self.data}\r\n".encode()
     
 
@@ -34,7 +34,7 @@ class Integer:
 class BulkString:
     data: str
 
-    def encode(self) -> bytes:
+    def encode_message(self) -> bytes:
         length = len(self.data)
         return f"${length}\r\n{self.data}\r\n".encode()
 
@@ -50,13 +50,13 @@ class Array:
         if self.data:
             return len(self.data)
 
-    def encode(self) -> bytes:
+    def encode_message(self) -> bytes:
         length = len(self.data)
         message = f"*{length}\r\n"
 
         for i in range(length):
             message += encode_message(self.data[i]).decode()
-            
+
         return message.encode()
     
 
@@ -69,5 +69,11 @@ class Nulls:
 
 
 def encode_message(message: RespDataType) -> bytes:
-    return message.encode()
+    return message.encode_message()
 
+
+def main():
+    pass
+
+if __name__ == '__main__':
+    main()
