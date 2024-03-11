@@ -1,6 +1,6 @@
-from pyredis.protocol.protocol_handler import RespDataType, SimpleString, SimpleError, Integer, BulkString, Array
-from pyredis.protocol.protocol_handler import extract_frame_from_buffer
-from pyredis.protocol.protocol_handler import parse_simple_string, parse_simple_errors, parse_integers, parse_bulk_string, parse_array
+from pyredis.protocol_handler import RespDataType, SimpleString, SimpleError, Integer, BulkString, Array
+from pyredis.protocol_handler import extract_frame_from_buffer
+from pyredis.protocol_handler import parse_simple_string, parse_simple_errors, parse_integers, parse_bulk_string, parse_array
 import pytest
 
 @pytest.mark.parametrize("buffer, expected", [

@@ -1,4 +1,4 @@
-from .data_types import (RespDataType, SimpleError, Integer, BulkString, SimpleString, Array)
+from pyredis.data_types import (RespDataType, SimpleError, Integer, BulkString, SimpleString, Array)
 from typing import Callable, Optional, Tuple
 
 _MSG_SEPARATOR = b"\r\n"
@@ -71,7 +71,7 @@ VALID_FIRST_BYTES: dict[str, ParseFn] = {
 }
 
 
-def extract_frame_from_buffer(buffer: bytes) -> Tuple[RespDataType | None, int]:
+def extract_frame_from_buffer(buffer: bytes | bytearray) -> Tuple[RespDataType | None, int]:
     separator_index = buffer.find(_MSG_SEPARATOR)
     first_byte = chr(buffer[0])
 
@@ -79,3 +79,4 @@ def extract_frame_from_buffer(buffer: bytes) -> Tuple[RespDataType | None, int]:
         return VALID_FIRST_BYTES[first_byte](buffer, separator_index)
 
     return None, 0
+

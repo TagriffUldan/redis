@@ -8,12 +8,16 @@ class RespDataType(Protocol):
     def encode_message(self) -> bytes:
         ...
 
+
 @dataclass
 class SimpleString:
     data: str
 
     def encode_message(self) -> bytes:
         return f"+{self.data}\r\n".encode()
+
+    def to_str(self) -> str:
+        return self.data
     
 @dataclass 
 class SimpleError:
@@ -21,6 +25,9 @@ class SimpleError:
 
     def encode_message(self) -> bytes:
         return f"-{self.data}\r\n".encode()
+    
+    def to_str(self) -> str:
+        return self.data
 
 @dataclass
 class Integer:
@@ -28,7 +35,9 @@ class Integer:
 
     def encode_message(self) -> bytes:
         return f":{self.data}\r\n".encode()
-    
+
+    def to_str(self) -> str:
+        return str(self.data)
 
 @dataclass
 class BulkString:
@@ -37,6 +46,9 @@ class BulkString:
     def encode_message(self) -> bytes:
         length = len(self.data)
         return f"${length}\r\n{self.data}\r\n".encode()
+
+    def to_str(self) -> str:
+        return self.data
 
 @dataclass
 class Array:
@@ -60,20 +72,9 @@ class Array:
         return message.encode()
     
 
-@dataclass
-class Nulls:
-    data: None
-
-    def encode(self) -> bytes:
-        ...
-
-
+    
 def encode_message(message: RespDataType) -> bytes:
     return message.encode_message()
 
 
-def main():
-    pass
 
-if __name__ == '__main__':
-    main()

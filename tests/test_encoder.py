@@ -1,5 +1,5 @@
 import pytest
-from pyredis.protocol.data_types import RespDataType, SimpleString, SimpleError, BulkString, Integer, Array, encode_message
+from pyredis.data_types import RespDataType, SimpleString, SimpleError, BulkString, Integer, Array, encode_message
 
 
 @pytest.mark.parametrize("message, expected", [
