@@ -1,8 +1,8 @@
 import typer
 from typing_extensions import Annotated
 import socket
-from pyredis.data_types import encode_message, Array, BulkString, RespDataType
-from pyredis.protocol_handler import extract_frame_from_buffer
+from data_types import encode_message, Array, BulkString, RespDataType
+from protocol_handler import extract_frame_from_buffer
 
 DEFAULT_PORT = 6379
 DEFAULT_SERVER = "127.0.0.1"
@@ -27,24 +27,31 @@ def main(server: Annotated[str, typer.Argument()] = DEFAULT_SERVER,
             if command.lower() == 'quit':
                 break
             else:
-                encoded_message = encode_message(encode_command(command))
                 client_socket.send(encoded_message)  
                 
                 buffer = bytearray()
                 data = client_socket.recv(RECV_SIZE)
                 buffer.extend(data)
+                print(buffer)
+
+                # encoded_message = encode_message(encode_command(command))
+                # client_socket.send(encoded_message)  
                 
-                frame, frame_size = extract_frame_from_buffer(buffer)
+                # buffer = bytearray()
+                # data = client_socket.recv(RECV_SIZE)
+                # buffer.extend(data)
                 
-                while True:
-                    if frame:
-                        buffer = buffer[frame_size:]
-                        if isinstance(frame, Array):
-                            for count, item in enumerate(frame.data):
-                                print(f'{count + 1}) "{item.data}"')
-                        else:
-                            print(frame.data)
-                        break
+                # frame, frame_size = extract_frame_from_buffer(buffer)
+                
+                # while True:
+                #     if frame:
+                #         buffer = buffer[frame_size:]
+                #         if isinstance(frame, Array):
+                #             for count, item in enumerate(frame.data):
+                #                 print(f'{count + 1}) "{item.data}"')
+                #         else:
+                #             print(frame.data)
+                #         break
 
 
         

@@ -1,4 +1,4 @@
-from pyredis.data_types import (RespDataType, SimpleError, Integer, BulkString, SimpleString, Array)
+from data_types import (RespDataType, SimpleError, Integer, BulkString, SimpleString, Array)
 from typing import Callable, Optional, Tuple
 
 _MSG_SEPARATOR = b"\r\n"
